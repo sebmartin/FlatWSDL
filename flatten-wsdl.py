@@ -1,8 +1,8 @@
 #! /usr/bin/python
-
+import sys
 import xml.etree.ElementTree as etree
 import urllib
-
+from optparse import OptionParser
 
 def importUrl(url, parent, after):
 	insertOffset = 1
@@ -17,10 +17,7 @@ def flattenImports(parent, tag, skip):
 		importEl = parent.find(tag)
 		if importEl == None:
 			break
-		
-		#	if importEl.tag == '{http://www.w3.org/2001/XMLSchema}import':
-		#		import pdb; pdb.set_trace()
-		
+			
 		url = importEl.get('location')
 		if not url:
 			url = importEl.get('schemaLocation')
@@ -38,7 +35,7 @@ def loadTreeFromUrl(url):
 	return tree
 
 
-def flattenWsdl(url):
+def flattenWsdl(url, output):
 	tree = loadTreeFromUrl(url)
 	root = tree.getroot()
 	
@@ -49,9 +46,27 @@ def flattenWsdl(url):
 	for schema in root.findall('.//{http://www.w3.org/2001/XMLSchema}schema'):
 		flattenImports(schema, '{http://www.w3.org/2001/XMLSchema}import', [])
 	
-	tree.write('./test.xml')
+	tree.write(output)
+	
+# Process command line arguments
+parser = OptionParser('usage: %prog [options] URL [file]')
+parser.add_option('-n', '--namespace', help='override the default namespace')
+(options, args) = parser.parse_args()
 
+if options.namespace:
+	print('WARNING: the NAMESPACE option is not yet implemented.')
 
-flattenWsdl('<insert-url-to-wsdl-here>')
+if len(args) == 0:
+	parser.print_usage()
+	sys.exit()
+elif len(args) > 1:
+	out = open(args[1], 'w+')
+else:
+	out = sys.stdout
 
-print "done."
+# Flatten the WSDL!
+try:
+	flattenWsdl(args[0], out)
+finally:
+	print "\ndone."
+	out.close()
