@@ -3,6 +3,8 @@ import sys
 import xml.etree.ElementTree as etree
 import urllib
 from optparse import OptionParser
+from subprocess import call
+
 
 def importUrl(url, parent, after):
 	insertOffset = 1
@@ -49,24 +51,31 @@ def flattenWsdl(url, output):
 	tree.write(output)
 	
 # Process command line arguments
-parser = OptionParser('usage: %prog [options] URL [file]')
-parser.add_option('-n', '--namespace', help='override the default namespace')
+usage = "usage: %prog [options] URL"
+parser = OptionParser(usage)
+parser.add_option('-f', '--filename', action="store", type="string", dest="filename",
+	help='Output file to write to')
+parser.add_option('-n', '--namespace', action="store", type="string", dest="namespace",
+	help='Override the default namespace')
+parser.add_option('-t', '--tidy', action="store_true",
+	help='Run |tidy| on the file after flattening. Requires -f')
 (options, args) = parser.parse_args()
 
 if options.namespace:
 	print('WARNING: the NAMESPACE option is not yet implemented.')
 
-if len(args) == 0:
-	parser.print_usage()
+if (len(args) == 0) or ((not options.filename) and options.tidy):
+	parser.print_help()
 	sys.exit()
-elif len(args) > 1:
-	out = open(args[1], 'w+')
-else:
-	out = sys.stdout
+
+out = open(options.filename, 'w+') if options.filename else sys.stdout
 
 # Flatten the WSDL!
 try:
 	flattenWsdl(args[0], out)
 finally:
-	print "\ndone."
+	print "\nFlattening done."
 	out.close()
+
+if options.tidy:
+	call(['tidy', '-q', '-mi', '-xml', options.filename])
