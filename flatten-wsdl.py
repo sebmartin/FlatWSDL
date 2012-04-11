@@ -1,4 +1,5 @@
 #! /usr/bin/python
+
 import sys
 import xml.etree.ElementTree as etree
 import urllib
@@ -78,6 +79,7 @@ out = open(options.filename, 'w+') if options.filename else sys.stdout
 
 # Flatten the WSDL!
 try:
+	print "Processing: ", args[0]
 	flattenWsdl(args[0], out)
 finally:
 	print "Flattening done."
